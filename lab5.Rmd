@@ -1,0 +1,79 @@
+---
+title: "Lab5"
+author: "Adam Brandt"
+date: "11/6/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+1.
+```{r}
+library(ggplot2)
+library(dplyr)
+acc <- read.csv("https://raw.githubusercontent.com/xdaiISU/ds202materials/master/hwlabs/fars2017/accident.csv", stringsAsFactors = FALSE)
+pers <- read.csv("https://raw.githubusercontent.com/xdaiISU/ds202materials/master/hwlabs/fars2017/person.csv", stringsAsFactors = FALSE)
+ggplot(data = acc, aes(x = DAY_WEEK)) + geom_bar()
+```
+
+On days 6, 7, and 8 which is the weekend there are more accidents than other days.
+
+2.
+```{r}
+fatal <- pers$INJ_SEV
+head(fatal)
+```
+
+3.
+```{r}
+dang <- pers %>% select(INJ_SEV, MAKE) %>% arrange(-INJ_SEV)
+head(dang)
+```
+5.
+```{r}
+joined <- full_join(acc, pers, by = c("STATE", "ST_CASE", "VE_FORMS", "COUNTY", "DAY", "MONTH", "HOUR", "MINUTE", "RUR_URB", "FUNC_SYS","HARM_EV", "MAN_COLL"))
+names(joined)
+```
+
+
+4.
+```{r}
+library(readxl)
+library(maps)
+glc <- readxl::read_xlsx("C:/Users/Adam Brandt/OneDrive/Documents/DS202/ds202_lab5/FRPP_GLCU.xlsx")
+glc$"State Code" <- as.numeric(glc$"State Code")
+glc$"County Code" <- as.numeric(glc$"County Code")
+counties <- map_data("county")
+allData <- left_join(joined, glc, by = c('STATE' = 'State Code', 'COUNTY' = 'County Code'))
+allData$STATE <- as.character(allData$STATE)
+allData <- full_join(allData, counties, by = c('STATE' = 'region'))
+dangStates <- counties %>% ggplot(aes(x = long, y = lat)) + geom_polygon(aes(group = group)) + geom_text(aes(label = counties$region), color = 'white', data = dang)
+```
+
+
+
+6.
+```{r}
+table(acc$DAY_WEEK)
+table(acc$HOUR)
+table(joined$SEX)
+ggplot(data = acc, aes(x = HOUR)) + geom_bar()
+ggplot(data = joined, aes(x = SEX)) + geom_bar()
+```
+
+7.
+```{r}
+allData %>% ggplot(aes(x = long, y = lat, fill = INJ_SEV)) + geom_polygon(aes(group = group, color = INJ_SEV))
+```
+
+8.
+```{r}
+winter <- acc %>% filter(MONTH %in% c(1,2,12))
+summer <- acc %>% filter(MONTH %in% c(6,7,8))
+nrow(winter)
+nrow(summer)
+```
+The summer is more dangerous than the winter possibly due to more people being outside since the weather is nicer.
+
